@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -33,8 +34,12 @@ class UserResource extends Resource
                 Forms\Components\DateTimePicker::make('email_verified_at'),
                 Forms\Components\TextInput::make('password')
                     ->password()
-                    ->required()
-                    ->maxLength(255),
+                    ->nullable()
+                    ->maxLength(255)
+                    ->dehydrateStateUsing(function ($state, $record) {
+                        // If no new password is provided, use the existing password
+                        return $state ? bcrypt($state) : $record->password;
+                    }),
                 Forms\Components\TextInput::make('role')
                     ->maxLength(255)
                     ->default(null),
@@ -59,9 +64,31 @@ class UserResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->formatStateUsing(function ($state) {
+                        $updatedAt = Carbon::parse($state);
+                        $now = Carbon::now();
+                        $diff = $updatedAt->diff($now);
+
+                        $days = $diff->d;
+                        $hours = $diff->h;
+                        $minutes = $diff->i;
+
+                        $timeString = '';
+
+                        if ($days > 0) {
+                            $timeString .= $days . ' day' . ($days > 1 ? 's' : '') . ' ';
+                        }
+                        if ($hours > 0) {
+                            $timeString .= $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ';
+                        }
+                        if ($minutes > 0) {
+                            $timeString .= $minutes . ' minute' . ($minutes > 1 ? 's' : '') . ' ';
+                        }
+
+                        return trim($timeString) . ' ago';
+                    })
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false),
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
@@ -71,7 +98,9 @@ class UserResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -93,8 +122,8 @@ class UserResource extends Resource
     {
         return [
             'index' => Pages\ListUsers::route('/'),
-            'create' => Pages\CreateUser::route('/create'),
-            'edit' => Pages\EditUser::route('/{record}/edit'),
+            // 'create' => Pages\CreateUser::route('/create'),
+            // 'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
 
