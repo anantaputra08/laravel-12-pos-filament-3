@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
+use Closure;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -46,7 +47,8 @@ class ProductResource extends Resource
                     ->required(),
                 Forms\Components\Toggle::make('is_stock')
                     ->default(true)
-                    ->required(),
+                    ->required()
+                    ->reactive(),
                 Forms\Components\TextInput::make('base_price')
                     ->prefix('Rp')
                     ->required()
@@ -57,7 +59,10 @@ class ProductResource extends Resource
                     ->numeric(),
                 Forms\Components\TextInput::make('stock')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->disabled(function ($get) {
+                        return !$get('is_stock');
+                    }),
                 Forms\Components\TextInput::make('min_stock')
                     ->required()
                     ->numeric()
