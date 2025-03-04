@@ -85,15 +85,13 @@ class ProductResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('type_id')
+                Tables\Columns\TextColumn::make('type.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('category_id')
+                Tables\Columns\TextColumn::make('category.name')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_available')
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('is_stock')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('base_price')
                     ->numeric()
@@ -102,12 +100,6 @@ class ProductResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stock')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('min_stock')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('weight')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('base_unit')
