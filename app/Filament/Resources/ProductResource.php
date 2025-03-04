@@ -29,12 +29,18 @@ class ProductResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('type_id')
+                Forms\Components\Select::make('type_id')
+                    ->label('Product Type')
                     ->required()
-                    ->numeric(),
-                Forms\Components\TextInput::make('category_id')
+                    ->relationship('type', 'name')
+                    ->searchable()
+                    ->preload(),
+                Forms\Components\Select::make('category_id')
+                    ->label('Product Category')
                     ->required()
-                    ->numeric(),
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload(),
                 Forms\Components\Toggle::make('is_available')
                     ->default(true)
                     ->required(),
