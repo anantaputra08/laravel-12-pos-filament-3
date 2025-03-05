@@ -44,7 +44,7 @@ class Product extends Model
     /**
      * Relasi ke ProductUnit
      */
-    public function units()
+    public function productUnits()
     {
         return $this->hasMany(ProductUnit::class, 'product_id');
     }
