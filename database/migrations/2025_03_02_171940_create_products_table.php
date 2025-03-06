@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('selling_price', 10, 2);
             $table->integer('stock');
             $table->integer('min_stock')->default(0);
-            $table->decimal('weight', 8, 2);
+            $table->decimal('weight', 8, 2)->nullable();
             $table->string('base_unit');
             $table->timestamps();
             $table->softDeletes();
