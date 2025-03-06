@@ -36,6 +36,7 @@ class ProductResource extends Resource
                         ->label('Product Type')
                         ->required()
                         ->relationship('type', 'name')
+                        ->default('1')
                         ->searchable()
                         ->preload()
                         ->reactive(),
@@ -47,6 +48,9 @@ class ProductResource extends Resource
                         ->schema([
                             Forms\Components\TextInput::make('barcode')
                                 ->label('Product Unit Barcode')
+                                ->maxLength(255),
+                            Forms\Components\TextInput::make('name')
+                                ->label('Product Unit Name')
                                 ->required()
                                 ->maxLength(255),
                             Forms\Components\TextInput::make('selling_price')
@@ -59,8 +63,8 @@ class ProductResource extends Resource
                                 ->required()
                                 ->numeric(),
                         ])
-                        ->visible(fn($get) => $get('type_id') == '2') // Ganti hidden dengan visible
-                        ->columns(3)
+                        ->visible(fn($get) => $get('type_id') == '2')
+                        ->columns(4)
                         ->createItemButtonLabel('Add Product Unit')
                         ->deletable()
                         ->addable()
