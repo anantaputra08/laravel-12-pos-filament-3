@@ -198,6 +198,25 @@ class TransactionResource extends Resource
                     ->default(0.00)
                     ->disabled()
                     ->dehydrated(),
+
+                Forms\Components\TextInput::make('paid_amount')
+                    ->required()
+                    ->prefix('Rp.')
+                    ->default(0.00)
+                    ->live()
+                    ->debounce(700)
+                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                        $grossAmount = $get('gross_amount');
+                        $changeAmount = $state - $grossAmount;
+                        $set('change_amount', $changeAmount);
+                    }),
+
+                Forms\Components\TextInput::make('change_amount')
+                    ->required()
+                    ->prefix('Rp.')
+                    ->default(0.00)
+                    ->disabled()
+                    ->dehydrated(),
             ]);
     }
 
