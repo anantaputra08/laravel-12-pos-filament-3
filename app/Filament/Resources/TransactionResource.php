@@ -89,7 +89,8 @@ class TransactionResource extends Resource
                         Forms\Components\Select::make('product_id')
                             ->relationship('product', 'name')
                             ->disabled()
-                            ->dehydrated(),
+                            ->dehydrated()
+                            ->required(),
 
                         Forms\Components\Select::make('product_unit_id')
                             ->label('Unit')
@@ -106,7 +107,7 @@ class TransactionResource extends Resource
 
                                 // Mulai dengan satuan dasar dari Product
                                 $options = [
-                                    'base' => 'Pcs - Rp ' . number_format($product->selling_price)
+                                    'base' => "{$product->base_unit} - Rp " . number_format($product->selling_price)
                                 ];
 
                                 // Tambahkan unit-unit lain dari ProductUnit
@@ -140,6 +141,7 @@ class TransactionResource extends Resource
                                         $set('product_price', $product->selling_price);
                                         $set('total_price', $product->selling_price * $get('qty'));
                                         $set('is_base_unit', true);
+                                        $set('product_unit_id', null); // Set null untuk unit dasar
                                     }
                                 } else {
                                     // Jika menggunakan unit lain
@@ -152,10 +154,16 @@ class TransactionResource extends Resource
                                 }
                             })
                             ->live() // Pastikan komponen ini live
-                            ->required(),
+                            ->required()
+                            ->dehydrated(function ($state) {
+                                // Jika base, kita tidak simpan product_unit_id
+                                // tapi tetap menyimpan null untuk konsistensi
+                                return true;
+                            }),
 
                         Forms\Components\Hidden::make('is_base_unit')
-                            ->default(false),
+                            ->default(false)
+                            ->dehydrated(), // Pastikan is_base_unit terhidrasi
 
                         Forms\Components\TextInput::make('product_price')
                             ->disabled()
@@ -177,6 +185,16 @@ class TransactionResource extends Resource
                             ->prefix('Rp.')
                             ->dehydrated(),
                     ])
+                    ->mutateRelationshipDataBeforeCreateUsing(function (array $data): array {
+                        // Pastikan product_unit_id disimpan dengan benar
+                        if ($data['product_unit_id'] === 'base') {
+                            $data['product_unit_id'] = null;
+                            $data['is_base_unit'] = true;
+                        } else {
+                            $data['is_base_unit'] = false;
+                        }
+                        return $data;
+                    })
                     ->deleteAction(
                         fn(Forms\Components\Actions\Action $action) => $action
                             ->after(fn(callable $set, callable $get) => static::recalculateGrossAmount($set, $get))
@@ -231,6 +249,7 @@ class TransactionResource extends Resource
         $product = Product::where('barcode', $barcode)->first();
         $productUnit = null;
         $isBaseUnit = true;
+        $unitId = 'base';
 
         // Jika tidak ditemukan di Product, cari di ProductUnit
         if (!$product) {
@@ -239,6 +258,7 @@ class TransactionResource extends Resource
             if ($productUnit) {
                 $product = $productUnit->product;
                 $isBaseUnit = false;
+                $unitId = $productUnit->id;
             } else {
                 return false; // Produk tidak ditemukan
             }
@@ -256,7 +276,7 @@ class TransactionResource extends Resource
 
                 if ($isBaseUnit && isset($item['is_base_unit']) && $item['is_base_unit']) {
                     $isSameUnit = true;
-                } elseif (!$isBaseUnit && isset($item['product_unit_id']) && $item['product_unit_id'] == $productUnit->id) {
+                } elseif (!$isBaseUnit && isset($item['product_unit_id']) && $item['product_unit_id'] == $unitId) {
                     $isSameUnit = true;
                 }
 
@@ -277,15 +297,14 @@ class TransactionResource extends Resource
             $newItem = [
                 'product_id' => $product->id,
                 'is_base_unit' => $isBaseUnit,
+                'product_unit_id' => $unitId,
                 'qty' => 1,
             ];
 
             if ($isBaseUnit) {
-                $newItem['product_unit_id'] = 'base';
                 $newItem['product_price'] = $product->selling_price;
                 $newItem['total_price'] = $product->selling_price;
             } else {
-                $newItem['product_unit_id'] = $productUnit->id;
                 $newItem['product_price'] = $productUnit->selling_price;
                 $newItem['total_price'] = $productUnit->selling_price;
             }
@@ -300,8 +319,6 @@ class TransactionResource extends Resource
     public static function recalculateGrossAmount(callable $set, callable $get)
     {
         $items = $get('items') ?? [];
-        // Hapus dd($items) yang menghentikan eksekusi function
-
         $grossAmount = 0;
 
         foreach ($items as $item) {
