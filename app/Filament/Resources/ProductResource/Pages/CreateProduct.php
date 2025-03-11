@@ -7,10 +7,29 @@ use Filament\Actions;
 use Filament\Notifications\Notification;
 use Illuminate\Database\QueryException;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Log;
 
 class CreateProduct extends CreateRecord
 {
     protected static string $resource = ProductResource::class;
+    protected function afterCreate(): void
+    {
+        // Get the created product
+        $product = $this->record;
+        
+        // Create default product unit
+        $defaultUnit = [
+            'barcode' => null,
+            'name' => $product->base_unit,
+            'selling_price' => $product->selling_price,
+            'conversion_rate' => 1,
+            'product_id' => $product->id
+        ];
+        
+        Log::info('Creating Default Product Unit', $defaultUnit);
+        $productUnit = $product->productUnits()->create($defaultUnit);
+        Log::info('Default Product Unit Created', ['id' => $productUnit->id]);
+    }
     protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
         try {
