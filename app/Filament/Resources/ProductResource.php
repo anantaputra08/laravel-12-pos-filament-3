@@ -42,9 +42,9 @@ class ProductResource extends Resource
                         ->reactive(),
 
                     // Repeater for ProductUnit fields
-                    Forms\Components\Repeater::make('product_units') // UBAH NAMA DARI productUnits KE product_units
+                    Forms\Components\Repeater::make('product_units')
                         ->label('Product Units')
-                        ->relationship('productUnits') // Tambahkan relasi
+                        ->relationship('productUnits')
                         ->schema([
                             Forms\Components\TextInput::make('barcode')
                                 ->label('Product Unit Barcode')
@@ -112,66 +112,6 @@ class ProductResource extends Resource
             ]);
     }
 
-    public static function create(array $data): Product
-    {
-        // Tambahkan debug log
-        Log::info('Creating Product', $data);
-
-        // Cek apakah product units ada
-        if (isset($data['productUnits'])) {
-            Log::info('Product Units', $data['productUnits']);
-        }
-
-        // Create the product
-        $product = Product::create($data);
-
-        // Simpan ProductUnits jika ada
-        if (isset($data['productUnits'])) {
-            foreach ($data['productUnits'] as $productUnitData) {
-                // Log setiap product unit yang akan disimpan
-                Log::info('Saving Product Unit', $productUnitData);
-
-                // Set the product_id untuk setiap ProductUnit
-                $productUnit = $product->productUnits()->create(array_merge($productUnitData, ['product_id' => $product->id]));
-
-                // Tambahkan log untuk memastikan pembuatan berhasil
-                Log::info('Product Unit Created', ['id' => $productUnit->id]);
-            }
-        }
-
-        return $product;
-    }
-
-    public static function update(array $data, Product $record): Product
-    {
-        // Tambahkan debug log
-        Log::info('Updating Product', $data);
-
-        // Update the product
-        $record->update($data);
-
-        // Update ProductUnits
-        if (isset($data['productUnits'])) {
-            // Log units yang akan disimpan
-            Log::info('Product Units to Update', $data['productUnits']);
-
-            // Hapus unit lama
-            $record->productUnits()->delete();
-
-            // Buat unit baru
-            foreach ($data['productUnits'] as $productUnitData) {
-                // Log setiap unit yang akan dibuat
-                Log::info('Creating Product Unit', $productUnitData);
-
-                $productUnit = $record->productUnits()->create(array_merge($productUnitData, ['product_id' => $record->id]));
-
-                // Log konfirmasi pembuatan
-                Log::info('Product Unit Created', ['id' => $productUnit->id]);
-            }
-        }
-
-        return $record;
-    }
     public static function table(Table $table): Table
     {
         return $table
