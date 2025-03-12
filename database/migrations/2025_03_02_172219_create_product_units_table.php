@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('barcode')->unique()->nullable();
             $table->decimal('selling_price', 10, 2);
-            $table->decimal('conversion_rate', 10, 2);
+            $table->integer('conversion_rate', 10);
             $table->timestamps();
             $table->softDeletes();
         });
