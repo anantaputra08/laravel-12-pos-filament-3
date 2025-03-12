@@ -29,5 +29,13 @@ class DatabaseSeeder extends Seeder
         ];
 
         DB::table('product_types')->insert($productTypes);
+
+        $categories = [
+            ['name' => 'Drinks'],
+            ['name' => 'Foods'],
+            ['name' => 'Snacks'],
+        ];
+
+        DB::table('categories')->insert($categories);
     }
 }
