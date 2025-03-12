@@ -27,7 +27,6 @@ class ProductResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Product Details')->schema([
                     Forms\Components\TextInput::make('barcode')
-                        ->required()
                         ->maxLength(255),
                     Forms\Components\TextInput::make('name')
                         ->required()
