@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
+use App\Models\ProductType;
 use App\Models\User;
 use Carbon\Carbon;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -28,7 +30,9 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Multi Satuan'],
         ];
 
-        DB::table('product_types')->insert($productTypes);
+        foreach ($productTypes as $type) {
+            ProductType::create($type);
+        }
 
         $categories = [
             ['name' => 'Drinks'],
@@ -36,6 +40,8 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Snacks'],
         ];
 
-        DB::table('categories')->insert($categories);
+        foreach ($categories as $category) {
+            Category::create($category);
+        }
     }
 }
