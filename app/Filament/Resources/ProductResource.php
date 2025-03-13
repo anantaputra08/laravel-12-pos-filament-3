@@ -27,7 +27,24 @@ class ProductResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Product Details')->schema([
                     Forms\Components\TextInput::make('barcode')
-                        ->maxLength(255),
+                        ->maxLength(255)
+                        ->suffixAction(Forms\Components\Actions\Action::make('generateBarcode')
+                            ->label('Generate')
+                            ->icon('heroicon-o-receipt-refund')
+                            ->action(function ($state, $set) {
+                                // Generate a unique barcode
+                                $latestProduct = Product::orderBy('barcode', 'desc')->first();
+                                $latestBarcode = $latestProduct ? intval($latestProduct->barcode) : 0;
+                                $generatedBarcode = str_pad($latestBarcode + 1, 10, '0', STR_PAD_LEFT);
+
+                                // Ensure the generated barcode is unique
+                                while (Product::where('barcode', $generatedBarcode)->exists()) {
+                                    $generatedBarcode = str_pad(intval($generatedBarcode) + 1, 10, '0', STR_PAD_LEFT);
+                                }
+
+                                $set('barcode', $generatedBarcode);
+                            })
+                        ),
                     Forms\Components\TextInput::make('name')
                         ->required()
                         ->maxLength(255),
