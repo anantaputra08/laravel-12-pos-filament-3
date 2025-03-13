@@ -105,11 +105,6 @@ class TransactionResource extends Resource
                                     return [];
                                 }
 
-                                // Mulai dengan satuan dasar dari Product
-                                $options = [
-                                    'base' => "{$product->base_unit} - Rp " . number_format($product->selling_price)
-                                ];
-
                                 // Tambahkan unit-unit lain dari ProductUnit
                                 $productUnits = ProductUnit::where('product_id', $productId)->get();
                                 foreach ($productUnits as $unit) {
