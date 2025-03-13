@@ -28,22 +28,23 @@ class ProductResource extends Resource
                 Forms\Components\Section::make('Product Details')->schema([
                     Forms\Components\TextInput::make('barcode')
                         ->maxLength(255)
-                        ->suffixAction(Forms\Components\Actions\Action::make('generateBarcode')
-                            ->label('Generate')
-                            ->icon('heroicon-o-receipt-refund')
-                            ->action(function ($state, $set) {
-                                // Generate a unique barcode
-                                $latestProduct = Product::orderBy('barcode', 'desc')->first();
-                                $latestBarcode = $latestProduct ? intval($latestProduct->barcode) : 0;
-                                $generatedBarcode = str_pad($latestBarcode + 1, 10, '0', STR_PAD_LEFT);
+                        ->suffixAction(
+                            Forms\Components\Actions\Action::make('generateBarcode')
+                                ->label('Generate')
+                                ->icon('heroicon-o-receipt-refund')
+                                ->action(function ($state, $set) {
+                                    // Generate a unique barcode
+                                    $latestProduct = Product::orderBy('barcode', 'desc')->first();
+                                    $latestBarcode = $latestProduct ? intval($latestProduct->barcode) : 0;
+                                    $generatedBarcode = str_pad($latestBarcode + 1, 10, '0', STR_PAD_LEFT);
 
-                                // Ensure the generated barcode is unique
-                                while (Product::where('barcode', $generatedBarcode)->exists()) {
-                                    $generatedBarcode = str_pad(intval($generatedBarcode) + 1, 10, '0', STR_PAD_LEFT);
-                                }
+                                    // Ensure the generated barcode is unique
+                                    while (Product::where('barcode', $generatedBarcode)->exists()) {
+                                        $generatedBarcode = str_pad(intval($generatedBarcode) + 1, 10, '0', STR_PAD_LEFT);
+                                    }
 
-                                $set('barcode', $generatedBarcode);
-                            })
+                                    $set('barcode', $generatedBarcode);
+                                })
                         ),
                     Forms\Components\TextInput::make('name')
                         ->required()
@@ -175,6 +176,13 @@ class ProductResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('printBarcode')
+                    ->label('Print Barcode')
+                    ->icon('heroicon-o-printer')
+                    ->action(function ($record) {
+                        // Redirect to the route that handles the PDF generation
+                        return redirect()->route('print.barcode', ['barcode' => $record->barcode]);
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
