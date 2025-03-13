@@ -8,3 +8,4 @@ Route::get('/', function () {
 });
 
 Route::get('/print-barcode/{barcode}', [BarcodeController::class, 'print'])->name('print.barcode');
+Route::get('/print-barcodes', [BarcodeController::class, 'printBulk'])->name('print.barcodes');

@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class ProductResource extends Resource
@@ -173,9 +174,6 @@ class ProductResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
                 Tables\Actions\Action::make('printBarcode')
                     ->label('Print Barcode')
                     ->icon('heroicon-o-printer')
@@ -183,12 +181,23 @@ class ProductResource extends Resource
                         // Redirect to the route that handles the PDF generation
                         return redirect()->route('print.barcode', ['barcode' => $record->barcode]);
                     }),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
+                    Tables\Actions\BulkAction::make('printBarcodes')
+                        ->label('Print Barcodes')
+                        ->icon('heroicon-o-printer')
+                        ->action(function (Collection $records) {
+                            $barcodes = $records->pluck('barcode')->toArray();
+                            // Redirect to the route that handles the bulk PDF generation
+                            return redirect()->route('print.barcodes', ['barcodes' => $barcodes]);
+                        }),
                 ]),
             ]);
     }
