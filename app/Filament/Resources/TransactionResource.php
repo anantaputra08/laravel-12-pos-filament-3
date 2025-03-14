@@ -83,6 +83,26 @@ class TransactionResource extends Resource
                     ->default(fn() => now()->addMinutes(30))
                     ->required(),
 
+                Forms\Components\Select::make('product_search')
+                    ->label('Search Product')
+                    ->options(Product::all()->pluck('name', 'id'))
+                    ->live()
+                    ->searchable()
+                    ->placeholder('Search and select a product')
+                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                        if (empty($state)) {
+                            return;
+                        }
+
+                        static::addProductById($state, $set, $get);
+
+                        // Reset input product_search agar bisa search produk berikutnya
+                        $set('product_search', '');
+
+                        // Hitung ulang gross_amount
+                        static::recalculateGrossAmount($set, $get);
+                    }),
+
                 Forms\Components\Repeater::make('items')
                     ->relationship('items')
                     ->schema([
@@ -303,6 +323,55 @@ class TransactionResource extends Resource
                 $newItem['product_price'] = $productUnit->selling_price;
                 $newItem['total_price'] = $productUnit->selling_price;
             }
+
+            $items[] = $newItem;
+        }
+
+        $set('items', $items);
+        return true; // Produk ditemukan dan ditambahkan
+    }
+
+    public static function addProductById($productId, callable $set, callable $get)
+    {
+        // Jika productId kosong, jangan lakukan apa-apa
+        if (empty($productId)) {
+            return false;
+        }
+
+        // Cari berdasarkan productId di tabel Product
+        $product = Product::find($productId);
+        if (!$product) {
+            return false; // Produk tidak ditemukan
+        }
+
+        // Kita sudah menemukan produk, sekarang tambahkan ke items
+        $items = $get('items') ?? [];
+
+        // Cek apakah produk dengan unit yang sama sudah ada di dalam repeater
+        $existingItemKey = null;
+        foreach ($items as $key => $item) {
+            if ($item['product_id'] == $product->id) {
+                // Jika produk sudah ada, tambahkan quantity
+                $existingItemKey = $key;
+                break;
+            }
+        }
+
+        if ($existingItemKey !== null) {
+            // Jika produk dengan unit yang sama sudah ada, tambahkan quantity
+            $currentQty = $items[$existingItemKey]['qty'];
+            $items[$existingItemKey]['qty'] = $currentQty + 1;
+            $items[$existingItemKey]['total_price'] = $items[$existingItemKey]['product_price'] * ($currentQty + 1);
+        } else {
+            // Jika produk belum ada, tambahkan sebagai item baru
+            $newItem = [
+                'product_id' => $product->id,
+                'is_base_unit' => true, // Asumsikan unit dasar
+                'product_unit_id' => null, // Set null untuk unit dasar
+                'qty' => 1,
+                'product_price' => $product->selling_price,
+                'total_price' => $product->selling_price,
+            ];
 
             $items[] = $newItem;
         }
