@@ -27,29 +27,35 @@ class TransactionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('order_id')
-                    ->default(fn() => Transaction::generateOrderId())
-                    ->required()
-                    ->disabled()
-                    ->dehydrated()
-                    ->maxLength(255),
+                Forms\Components\Grid::make(4)->schema([
+                    Forms\Components\TextInput::make('order_id')
+                        ->default(fn() => Transaction::generateOrderId())
+                        ->required()
+                        ->disabled()
+                        ->dehydrated()
+                        ->maxLength(255)
+                        ->columnSpan(1),
 
-                Forms\Components\Select::make('user_id')
-                    ->label('Cashier')
-                    ->default(fn() => Auth::id())
-                    ->relationship('user', 'name')
-                    ->disabled()
-                    ->dehydrated()
-                    ->required(),
+                    Forms\Components\Select::make('user_id')
+                        ->label('Cashier')
+                        ->default(fn() => Auth::id())
+                        ->relationship('user', 'name')
+                        ->disabled()
+                        ->dehydrated()
+                        ->required()
+                        ->columnSpan(1),
 
-                Forms\Components\TextInput::make('status')
-                    ->required()
-                    ->maxLength(255)
-                    ->default('pending'),
+                    Forms\Components\TextInput::make('status')
+                        ->required()
+                        ->maxLength(255)
+                        ->default('pending')
+                        ->columnSpan(1),
 
-                Forms\Components\TextInput::make('payment_type')
-                    ->maxLength(255)
-                    ->default(null),
+                    Forms\Components\DateTimePicker::make('expiry_time')
+                        ->default(fn() => now()->addMinutes(30))
+                        ->required()
+                        ->columnSpan(1),
+                ]),
 
                 Forms\Components\TextInput::make('barcode_input')
                     ->label('Scan Barcode')
@@ -78,10 +84,6 @@ class TransactionResource extends Resource
                     })
                     ->live()
                     ->debounce(1000), // Tambahkan debounce untuk menghindari multiple submit
-
-                Forms\Components\DateTimePicker::make('expiry_time')
-                    ->default(fn() => now()->addMinutes(30))
-                    ->required(),
 
                 Forms\Components\Select::make('product_search')
                     ->label('Search Product')
@@ -231,6 +233,10 @@ class TransactionResource extends Resource
                     ->default(0.00)
                     ->disabled()
                     ->dehydrated(),
+
+                Forms\Components\TextInput::make('payment_type')
+                    ->maxLength(255)
+                    ->default('Cash'),
 
                 Forms\Components\TextInput::make('paid_amount')
                     ->required()
