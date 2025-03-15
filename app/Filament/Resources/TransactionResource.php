@@ -122,16 +122,12 @@ class TransactionResource extends Resource
                                     return [];
                                 }
 
-                                $product = Product::find($productId);
-                                if (!$product) {
-                                    return [];
-                                }
-
-                                // Tambahkan unit-unit lain dari ProductUnit
+                                // Fetch units from ProductUnit table
                                 $productUnits = ProductUnit::where('product_id', $productId)->get();
+                                $options = [];
                                 foreach ($productUnits as $unit) {
                                     $conversionText = $unit->conversion_rate > 1
-                                        ? " ({$unit->conversion_rate} {$product->base_unit})"
+                                        ? " ({$unit->conversion_rate} {$unit->name})"
                                         : '';
 
                                     $options[$unit->id] = ($unit->name ?? 'Unit') .
@@ -151,30 +147,17 @@ class TransactionResource extends Resource
                                     return;
                                 }
 
-                                if ($state === 'base') {
-                                    // Jika menggunakan satuan dasar
-                                    $product = Product::find($productId);
-                                    if ($product) {
-                                        $set('product_price', $product->selling_price);
-                                        $set('total_price', $product->selling_price * $get('qty'));
-                                        $set('is_base_unit', true);
-                                        $set('product_unit_id', null); // Set null untuk unit dasar
-                                    }
-                                } else {
-                                    // Jika menggunakan unit lain
-                                    $unit = ProductUnit::find($state);
-                                    if ($unit) {
-                                        $set('product_price', $unit->selling_price);
-                                        $set('total_price', $unit->selling_price * $get('qty'));
-                                        $set('is_base_unit', false);
-                                    }
+                                $unit = ProductUnit::find($state);
+                                if ($unit) {
+                                    $set('product_price', $unit->selling_price);
+                                    $set('total_price', $unit->selling_price * $get('qty'));
+                                    $set('is_base_unit', false);
                                 }
                             })
-                            ->live() // Pastikan komponen ini live
+                            ->live() // Ensure this component is live
                             ->required()
                             ->dehydrated(function ($state) {
-                                // Jika base, kita tidak simpan product_unit_id
-                                // tapi tetap menyimpan null untuk konsistensi
+                                // If base, we do not save product_unit_id but still save null for consistency
                                 return true;
                             }),
 
@@ -266,22 +249,38 @@ class TransactionResource extends Resource
             return false;
         }
 
-        // Cari berdasarkan barcode di tabel Product
-        $product = Product::where('barcode', $barcode)->first();
-        $productUnit = null;
-        $isBaseUnit = true;
-        $unitId = 'base';
+        // Cari berdasarkan barcode di tabel ProductUnit terlebih dahulu
+        // Ini penting karena ProductUnit barcode bisa jadi merupakan subset dari Product barcode
+        $productUnit = ProductUnit::where('barcode', $barcode)->first();
 
-        // Jika tidak ditemukan di Product, cari di ProductUnit
-        if (!$product) {
-            $productUnit = ProductUnit::where('barcode', $barcode)->first();
+        if ($productUnit) {
+            // Jika ditemukan di ProductUnit, gunakan unit tersebut
+            $product = $productUnit->product;
+            $isBaseUnit = false;
+            $unitId = $productUnit->id;
+            $price = $productUnit->selling_price;
+        } else {
+            // Jika tidak ditemukan di ProductUnit, cari di Product
+            $product = Product::where('barcode', $barcode)->first();
 
-            if ($productUnit) {
-                $product = $productUnit->product;
-                $isBaseUnit = false;
-                $unitId = $productUnit->id;
-            } else {
+            if (!$product) {
                 return false; // Produk tidak ditemukan
+            }
+
+            // Cari unit dengan conversion_rate = 1 untuk produk ini
+            $baseUnit = ProductUnit::where('product_id', $product->id)
+                ->where('conversion_rate', 1)
+                ->first();
+
+            if ($baseUnit) {
+                $isBaseUnit = false; // Kita gunakan ProductUnit
+                $unitId = $baseUnit->id;
+                $price = $baseUnit->selling_price;
+            } else {
+                // Jika tidak ada unit dengan conversion_rate = 1, gunakan harga dari Product
+                $isBaseUnit = true;
+                $unitId = 'base';
+                $price = $product->selling_price;
             }
         }
 
@@ -320,15 +319,9 @@ class TransactionResource extends Resource
                 'is_base_unit' => $isBaseUnit,
                 'product_unit_id' => $unitId,
                 'qty' => 1,
+                'product_price' => $price,
+                'total_price' => $price,
             ];
-
-            if ($isBaseUnit) {
-                $newItem['product_price'] = $product->selling_price;
-                $newItem['total_price'] = $product->selling_price;
-            } else {
-                $newItem['product_price'] = $productUnit->selling_price;
-                $newItem['total_price'] = $productUnit->selling_price;
-            }
 
             $items[] = $newItem;
         }
@@ -348,6 +341,19 @@ class TransactionResource extends Resource
         $product = Product::find($productId);
         if (!$product) {
             return false; // Produk tidak ditemukan
+        }
+
+        // Cari unit dengan conversion_rate = 1
+        $productUnit = ProductUnit::where('product_id', $productId)
+            ->where('conversion_rate', 1)
+            ->first();
+
+        $isBaseUnit = true;
+        $unitId = 'base';
+
+        if ($productUnit) {
+            $isBaseUnit = false;
+            $unitId = $productUnit->id;
         }
 
         // Kita sudah menemukan produk, sekarang tambahkan ke items
@@ -372,11 +378,11 @@ class TransactionResource extends Resource
             // Jika produk belum ada, tambahkan sebagai item baru
             $newItem = [
                 'product_id' => $product->id,
-                'is_base_unit' => true, // Asumsikan unit dasar
-                'product_unit_id' => null, // Set null untuk unit dasar
+                'is_base_unit' => $isBaseUnit,
+                'product_unit_id' => $unitId,
                 'qty' => 1,
-                'product_price' => $product->selling_price,
-                'total_price' => $product->selling_price,
+                'product_price' => $isBaseUnit ? $product->selling_price : $productUnit->selling_price,
+                'total_price' => $isBaseUnit ? $product->selling_price : $productUnit->selling_price,
             ];
 
             $items[] = $newItem;

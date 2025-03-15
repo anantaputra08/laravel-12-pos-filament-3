@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('acquirer')->nullable();
             $table->string('payment_code')->nullable();
             $table->string('va_number')->nullable();
+            $table->decimal('paid_amount', 15, 2)->default(0); // Added field
+            $table->decimal('change_amount', 15, 2)->default(0); // Added field
             $table->timestamp('expiry_time')->nullable();
             $table->timestamps();
             $table->softDeletes();

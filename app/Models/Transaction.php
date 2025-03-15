@@ -15,6 +15,8 @@ class Transaction extends Model
         'order_id',
         'user_id',
         'gross_amount',
+        'paid_amount',
+        'change_amount',
         'status',
         'fraud_status',
         'payment_type',
