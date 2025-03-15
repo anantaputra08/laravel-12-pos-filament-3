@@ -210,35 +210,134 @@ class TransactionResource extends Resource
                         static::recalculateGrossAmount($set, $get);
                     }),
 
-                Forms\Components\TextInput::make('gross_amount')
-                    ->required()
-                    ->prefix('Rp.')
-                    ->default(0.00)
-                    ->disabled()
-                    ->dehydrated(),
+                Forms\Components\Grid::make(4)->schema([
+                    Forms\Components\TextInput::make('gross_amount')
+                        ->required()
+                        ->prefix('Rp.')
+                        ->default(0.00)
+                        ->disabled()
+                        ->dehydrated()
+                        ->columnSpan(1),
 
-                Forms\Components\TextInput::make('payment_type')
-                    ->maxLength(255)
-                    ->default('Cash'),
+                    Forms\Components\TextInput::make('payment_type')
+                        ->maxLength(255)
+                        ->default('Cash')
+                        ->columnSpan(1),
 
-                Forms\Components\TextInput::make('paid_amount')
-                    ->required()
-                    ->prefix('Rp.')
-                    ->default(0.00)
-                    ->live()
-                    ->debounce(700)
-                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                        $grossAmount = $get('gross_amount');
-                        $changeAmount = $state - $grossAmount;
-                        $set('change_amount', $changeAmount);
-                    }),
+                    Forms\Components\TextInput::make('paid_amount')
+                        ->required()
+                        ->prefix('Rp.')
+                        ->default(0.00)
+                        ->live()
+                        ->debounce(700)
+                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                            $grossAmount = $get('gross_amount');
+                            $changeAmount = $state - $grossAmount;
+                            $set('change_amount', $changeAmount);
+                        })
+                        ->columnSpan(1),
 
-                Forms\Components\TextInput::make('change_amount')
-                    ->required()
-                    ->prefix('Rp.')
-                    ->default(0.00)
-                    ->disabled()
-                    ->dehydrated(),
+                    Forms\Components\TextInput::make('change_amount')
+                        ->required()
+                        ->prefix('Rp.')
+                        ->default(0.00)
+                        ->live()
+                        ->disabled()
+                        ->dehydrated()
+                        ->columnSpan(1),
+                ]),
+
+                Forms\Components\Fieldset::make('Quick Amounts')
+                    ->columnSpanFull()
+                    ->schema([
+                        Forms\Components\Actions::make([
+                            Forms\Components\Actions\Action::make('1000')
+                                ->label('Rp. 1,000')
+                                ->action(function (callable $set, callable $get) {
+                                    $currentPaidAmount = $get('paid_amount');
+                                    $newPaidAmount = $currentPaidAmount + 1000;
+                                    $set('paid_amount', $newPaidAmount);
+
+                                    // Explicitly recalculate change amount
+                                    $grossAmount = $get('gross_amount');
+                                    $changeAmount = $newPaidAmount - $grossAmount;
+                                    $set('change_amount', $changeAmount);
+                                }),
+                            Forms\Components\Actions\Action::make('2000')
+                                ->label('Rp. 2,000')
+                                ->action(function (callable $set, callable $get) {
+                                    $currentPaidAmount = $get('paid_amount');
+                                    $newPaidAmount = $currentPaidAmount + 2000;
+                                    $set('paid_amount', $newPaidAmount);
+
+                                    // Explicitly recalculate change amount
+                                    $grossAmount = $get('gross_amount');
+                                    $changeAmount = $newPaidAmount - $grossAmount;
+                                    $set('change_amount', $changeAmount);
+                                }),
+                            Forms\Components\Actions\Action::make('5000')
+                                ->label('Rp. 5,000')
+                                ->action(function (callable $set, callable $get) {
+                                    $currentPaidAmount = $get('paid_amount');
+                                    $newPaidAmount = $currentPaidAmount + 5000;
+                                    $set('paid_amount', $newPaidAmount);
+
+                                    // Explicitly recalculate change amount
+                                    $grossAmount = $get('gross_amount');
+                                    $changeAmount = $newPaidAmount - $grossAmount;
+                                    $set('change_amount', $changeAmount);
+                                }),
+                            Forms\Components\Actions\Action::make('10000')
+                                ->label('Rp. 10,000')
+                                ->action(function (callable $set, callable $get) {
+                                    $currentPaidAmount = $get('paid_amount');
+                                    $newPaidAmount = $currentPaidAmount + 10000;
+                                    $set('paid_amount', $newPaidAmount);
+
+                                    // Explicitly recalculate change amount
+                                    $grossAmount = $get('gross_amount');
+                                    $changeAmount = $newPaidAmount - $grossAmount;
+                                    $set('change_amount', $changeAmount);
+                                }),
+                            Forms\Components\Actions\Action::make('20000')
+                                ->label('Rp. 20,000')
+                                ->action(function (callable $set, callable $get) {
+                                    $currentPaidAmount = $get('paid_amount');
+                                    $newPaidAmount = $currentPaidAmount + 20000;
+                                    $set('paid_amount', $newPaidAmount);
+
+                                    // Explicitly recalculate change amount
+                                    $grossAmount = $get('gross_amount');
+                                    $changeAmount = $newPaidAmount - $grossAmount;
+                                    $set('change_amount', $changeAmount);
+                                }),
+                            Forms\Components\Actions\Action::make('50000')
+                                ->label('Rp. 50,000')
+                                ->action(function (callable $set, callable $get) {
+                                    $currentPaidAmount = $get('paid_amount');
+                                    $newPaidAmount = $currentPaidAmount + 50000;
+                                    $set('paid_amount', $newPaidAmount);
+
+                                    // Explicitly recalculate change amount
+                                    $grossAmount = $get('gross_amount');
+                                    $changeAmount = $newPaidAmount - $grossAmount;
+                                    $set('change_amount', $changeAmount);
+                                }),
+                            Forms\Components\Actions\Action::make('100000')
+                                ->label('Rp. 100,000')
+                                ->action(function (callable $set, callable $get) {
+                                    $currentPaidAmount = $get('paid_amount');
+                                    $newPaidAmount = $currentPaidAmount + 100000;
+                                    $set('paid_amount', $newPaidAmount);
+
+                                    // Explicitly recalculate change amount
+                                    $grossAmount = $get('gross_amount');
+                                    $changeAmount = $newPaidAmount - $grossAmount;
+                                    $set('change_amount', $changeAmount);
+                                }),
+                        ])
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 
