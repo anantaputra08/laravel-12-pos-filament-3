@@ -526,6 +526,12 @@ class TransactionResource extends Resource
                 Tables\Columns\TextColumn::make('gross_amount')
                     ->money('IDR')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('paid_amount')
+                    ->money('IDR')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('change_amount')
+                    ->money('IDR')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state): string => match ($state) {
