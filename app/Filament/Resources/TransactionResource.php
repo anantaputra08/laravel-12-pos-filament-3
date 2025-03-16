@@ -13,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
@@ -532,15 +533,20 @@ class TransactionResource extends Resource
                 Tables\Columns\TextColumn::make('change_amount')
                     ->money('IDR')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'success' => 'success',
-                        'canceled' => 'danger',
-                        default => 'gray',
-                    })
-                    ->searchable(),
+                Tables\Columns\SelectColumn::make('status')
+                    ->options([
+                        'pending' => 'Pending',
+                        'success' => 'Success',
+                        'canceled' => 'Canceled',
+                    ])
+                    ->rules(['required'])
+                    ->afterStateUpdated(function ($record, $state) {
+                        Notification::make()
+                            ->title('Transaction Status Updated')
+                            ->body("Transaction with order ID '{$record->order_id}' has been updated to '{$state}'")
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Columns\TextColumn::make('payment_type')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('expiry_time')
