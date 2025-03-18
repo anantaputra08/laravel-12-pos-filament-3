@@ -194,6 +194,19 @@ class TransactionResource extends Resource
                         } else {
                             $data['is_base_unit'] = false;
                         }
+
+                        // Reduce stock based on the transaction
+                        $productUnit = ProductUnit::find($data['product_unit_id']);
+                        if ($productUnit) {
+                            $stockReduction = $data['qty'] * $productUnit->conversion_rate; // Calculate stock reduction
+                            $productUnit->product->decrement('stock', $stockReduction); // Reduce stock
+                        } elseif ($data['is_base_unit']) {
+                            $product = Product::find($data['product_id']);
+                            if ($product) {
+                                $product->decrement('stock', $data['qty']); // Reduce stock for base unit
+                            }
+                        }
+
                         return $data;
                     })
                     ->deleteAction(
