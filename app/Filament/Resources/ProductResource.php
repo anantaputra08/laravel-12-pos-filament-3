@@ -174,14 +174,32 @@ class ProductResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\Action::make('printBarcode')
                     ->label('Print Barcode')
                     ->icon('heroicon-o-printer')
-                    ->action(function ($record) {
+                    ->form([
+                        Forms\Components\Select::make('unit')
+                            ->label('Select Unit')
+                            ->options(function ($record) {
+                                // Fetch product units dynamically
+                                return $record->productUnits->pluck('name', 'id');
+                            })
+                            ->required(),
+                    ])
+                    ->action(function ($record, $data) {
+                        // Fetch the selected unit
+                        $unit = $record->productUnits()->find($data['unit']);
+
+                        // Determine the barcode to use
+                        $barcode = $unit && $unit->barcode ? $unit->barcode : $record->barcode;
+
                         // Redirect to the route that handles the PDF generation
-                        return redirect()->route('print.barcode', ['barcode' => $record->barcode]);
+                        return redirect()->route('print.barcode', [
+                            'barcode' => $barcode,
+                            'unit_id' => $data['unit'],
+                        ]);
                     }),
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
