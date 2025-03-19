@@ -200,6 +200,13 @@ class ProductResource extends Resource
                             'unit_id' => $data['unit'],
                         ]);
                     }),
+                Tables\Actions\Action::make('printPriceTag')
+                    ->label('Print Price Tag')
+                    ->icon('heroicon-o-currency-dollar')
+                    ->action(function ($record) {
+                        return redirect()->route('print.priceTag', ['product_id' => $record->id]);
+                    }),
+
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
