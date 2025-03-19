@@ -9,7 +9,10 @@ use App\Models\ProductUnit;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -137,14 +140,18 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('barcode')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
+                    ->weight(FontWeight::ExtraBold)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type.name')
-                    ->numeric()
+                    ->weight(FontWeight::Thin)
+                    ->color('gray')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('category.name')
-                    ->numeric()
+                    ->weight(FontWeight::Thin)
+                    ->color('gray')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_available')
+                    ->alignCenter()
                     ->boolean(),
                 Tables\Columns\TextColumn::make('base_price')
                     ->numeric()
@@ -174,41 +181,43 @@ class ProductResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\Action::make('printBarcode')
-                    ->label('Print Barcode')
-                    ->icon('heroicon-o-printer')
-                    ->form([
-                        Forms\Components\Select::make('unit')
-                            ->label('Select Unit')
-                            ->options(function ($record) {
-                                // Fetch product units dynamically
-                                return $record->productUnits->pluck('name', 'id');
-                            })
-                            ->required(),
-                    ])
-                    ->action(function ($record, $data) {
-                        // Fetch the selected unit
-                        $unit = $record->productUnits()->find($data['unit']);
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\Action::make('printBarcode')
+                        ->label('Print Barcode')
+                        ->icon('heroicon-o-printer')
+                        ->form([
+                            Forms\Components\Select::make('unit')
+                                ->label('Select Unit')
+                                ->options(function ($record) {
+                                    // Fetch product units dynamically
+                                    return $record->productUnits->pluck('name', 'id');
+                                })
+                                ->required(),
+                        ])
+                        ->action(function ($record, $data) {
+                            // Fetch the selected unit
+                            $unit = $record->productUnits()->find($data['unit']);
 
-                        // Determine the barcode to use
-                        $barcode = $unit && $unit->barcode ? $unit->barcode : $record->barcode;
+                            // Determine the barcode to use
+                            $barcode = $unit && $unit->barcode ? $unit->barcode : $record->barcode;
 
-                        // Redirect to the route that handles the PDF generation
-                        return redirect()->route('print.barcode', [
-                            'barcode' => $barcode,
-                            'unit_id' => $data['unit'],
-                        ]);
-                    }),
-                Tables\Actions\Action::make('printPriceTag')
-                    ->label('Print Price Tag')
-                    ->icon('heroicon-o-currency-dollar')
-                    ->action(function ($record) {
-                        return redirect()->route('print.priceTag', ['product_id' => $record->id]);
-                    }),
+                            // Redirect to the route that handles the PDF generation
+                            return redirect()->route('print.barcode', [
+                                'barcode' => $barcode,
+                                'unit_id' => $data['unit'],
+                            ]);
+                        }),
+                    Tables\Actions\Action::make('printPriceTag')
+                        ->label('Print Price Tag')
+                        ->icon('heroicon-o-currency-dollar')
+                        ->action(function ($record) {
+                            return redirect()->route('print.priceTag', ['product_id' => $record->id]);
+                        }),
 
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ])->tooltip('Actions'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
