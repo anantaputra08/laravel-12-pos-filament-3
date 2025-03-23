@@ -24,6 +24,11 @@ class TransactionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::whereDate('created_at', now()->toDateString())->count();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
