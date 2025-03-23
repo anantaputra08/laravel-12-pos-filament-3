@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Models\Product;
+use App\Models\ProductType;
 use App\Models\ProductUnit;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -141,6 +142,7 @@ class ProductResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->weight(FontWeight::ExtraBold)
+                    // ->description(fn(Product $record) => ($record->category?->name ?? '-') . ' | ' . ($record->type?->name ?? '-'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type.name')
                     ->weight(FontWeight::Thin)
@@ -150,20 +152,20 @@ class ProductResource extends Resource
                     ->weight(FontWeight::Thin)
                     ->color('gray')
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_available')
-                    ->alignCenter()
-                    ->boolean(),
                 Tables\Columns\TextColumn::make('base_price')
-                    ->numeric()
+                    ->money('IDR')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('selling_price')
-                    ->numeric()
+                    ->money('IDR')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('stock')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('base_unit')
                     ->searchable(),
+                Tables\Columns\IconColumn::make('is_available')
+                    ->alignCenter()
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
