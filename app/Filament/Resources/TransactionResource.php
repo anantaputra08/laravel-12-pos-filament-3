@@ -46,9 +46,13 @@ class TransactionResource extends Resource
                         ->required()
                         ->columnSpan(1),
 
-                    Forms\Components\TextInput::make('status')
+                    Forms\Components\Select::make('status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'success' => 'Success',
+                            'canceled' => 'Canceled',
+                        ])
                         ->required()
-                        ->maxLength(255)
                         ->default('pending')
                         ->columnSpan(1),
 
@@ -233,9 +237,16 @@ class TransactionResource extends Resource
                         ->dehydrated()
                         ->columnSpan(1),
 
-                    Forms\Components\TextInput::make('payment_type')
-                        ->maxLength(255)
-                        ->default('Cash')
+                    Forms\Components\Select::make('payment_type')
+                        ->options([
+                            'cash' => 'Cash',
+                            'bank_transfer' => 'Bank Transfer',
+                            'credit_card' => 'Credit Card',
+                            'debit_card' => 'Debit Card',
+                            'e_wallet' => 'E-Wallet',
+                        ])
+                        ->required()
+                        ->default('cash')
                         ->columnSpan(1),
 
                     Forms\Components\TextInput::make('paid_amount')
@@ -348,6 +359,13 @@ class TransactionResource extends Resource
                                     $grossAmount = $get('gross_amount');
                                     $changeAmount = $newPaidAmount - $grossAmount;
                                     $set('change_amount', $changeAmount);
+                                }),
+                            Forms\Components\Actions\Action::make('uang_pas')
+                                ->label('Uang Pas')
+                                ->action(function (callable $set, callable $get) {
+                                    $grossAmount = $get('gross_amount');
+                                    $set('paid_amount', $grossAmount);
+                                    $set('change_amount', 0);
                                 }),
                         ])
                             ->columnSpanFull(),
@@ -546,20 +564,27 @@ class TransactionResource extends Resource
                 Tables\Columns\TextColumn::make('change_amount')
                     ->money('IDR')
                     ->sortable(),
-                Tables\Columns\SelectColumn::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'success' => 'Success',
-                        'canceled' => 'Canceled',
-                    ])
-                    ->rules(['required'])
-                    ->afterStateUpdated(function ($record, $state) {
-                        Notification::make()
-                            ->title('Transaction Status Updated')
-                            ->body("Transaction with order ID '{$record->order_id}' has been updated to '{$state}'")
-                            ->success()
-                            ->send();
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'success' => 'success',
+                        'canceled' => 'danger',
+                        default => 'gray',
                     }),
+                // ->options([
+                //     'pending' => 'Pending',
+                //     'success' => 'Success',
+                //     'canceled' => 'Canceled',
+                // ])
+                // ->rules(['required'])
+                // ->afterStateUpdated(function ($record, $state) {
+                //     Notification::make()
+                //         ->title('Transaction Status Updated')
+                //         ->body("Transaction with order ID '{$record->order_id}' has been updated to '{$state}'")
+                //         ->success()
+                //         ->send();
+                // }),
                 Tables\Columns\TextColumn::make('payment_type')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('expiry_time')
