@@ -82,4 +82,8 @@ class ListProducts extends ListRecords
                 }),
         ];
     }
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
