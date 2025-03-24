@@ -19,10 +19,6 @@ class ListTransactions extends ListRecords
             Actions\CreateAction::make(),
         ];
     }
-    protected function getRedirectUrl(): string
-    {
-        return $this->getResource()::getUrl('index');
-    }
     public function getTabs(): array
     {
         return [

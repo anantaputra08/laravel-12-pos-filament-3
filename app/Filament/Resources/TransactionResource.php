@@ -148,7 +148,6 @@ class TransactionResource extends Resource
 
                                 return $options;
                             })
-                            ->reactive()
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                 if (!$state) {
                                     return;
@@ -166,7 +165,7 @@ class TransactionResource extends Resource
                                     $set('is_base_unit', false);
                                 }
                             })
-                            ->live() // Ensure this component is live
+                            ->live()
                             ->required()
                             ->dehydrated(function ($state) {
                                 // If base, we do not save product_unit_id but still save null for consistency
@@ -186,10 +185,20 @@ class TransactionResource extends Resource
                             ->numeric()
                             ->default(1)
                             ->live()
+                            ->debounce(800)
                             ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                if (empty($state)) {
+                                    return;
+                                }
+                                
+                                if (strlen($state) > 1 && $state[0] === '0') {
+                                    $decimalValue = '0.' . substr($state, 1);
+                                    $set('qty', (float) $decimalValue); // Set nilai qty ke format desimal
+                                }
+
                                 // Update total price
                                 $price = $get('product_price');
-                                $set('total_price', $price * $state);
+                                $set('total_price', $price * $get('qty')); // Pastikan menggunakan qty yang sudah diperbarui
                             }),
 
                         Forms\Components\TextInput::make('total_price')
@@ -229,7 +238,6 @@ class TransactionResource extends Resource
                     ->columnSpanFull()
                     ->columns(5)
                     ->defaultItems(0)
-                    // Gunakan live dengan modifikasi untuk memicu recalculate setiap kali repeater berubah
                     ->live(onBlur: true)
                     ->afterStateUpdated(function (callable $set, callable $get) {
                         static::recalculateGrossAmount($set, $get);
@@ -242,7 +250,17 @@ class TransactionResource extends Resource
                         ->default(0.00)
                         ->disabled()
                         ->dehydrated()
-                        ->columnSpan(1),
+                        ->columnSpan(1)
+                        ->suffixAction(
+                            Forms\Components\Actions\Action::make('recalculate')
+                                ->label('Recalculate')
+                                ->icon('heroicon-o-receipt-refund')
+                                ->tooltip('Recalculate gross amount based on items')
+                                ->action(function (callable $set, callable $get) {
+                                    // Call the recalculateGrossAmount method
+                                    static::recalculateGrossAmount($set, $get);
+                                })
+                        ),
 
                     Forms\Components\Select::make('payment_type')
                         ->options([
@@ -372,6 +390,12 @@ class TransactionResource extends Resource
                                 ->action(function (callable $set, callable $get) {
                                     $grossAmount = $get('gross_amount');
                                     $set('paid_amount', $grossAmount);
+                                    $set('change_amount', 0);
+                                }),
+                            Forms\Components\Actions\Action::make('reset')
+                                ->label('Reset')
+                                ->action(function (callable $set) {
+                                    $set('paid_amount', 0);
                                     $set('change_amount', 0);
                                 }),
                         ])
