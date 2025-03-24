@@ -630,6 +630,10 @@ class TransactionResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\Action::make('print')
+                    ->label('Print Receipt')
+                    ->icon('heroicon-o-printer')
+                    ->action(fn(Transaction $record) => redirect()->route('receipts.print', $record)),
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
