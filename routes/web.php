@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\PriceTagController;
+use App\Http\Controllers\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -13,3 +14,8 @@ Route::get('/print-barcodes', [BarcodeController::class, 'printBulk'])->name('pr
 
 Route::get('/print-price-tag/{product_id}', [PriceTagController::class, 'print'])
     ->name('print.priceTag');
+
+// Route::get('/print-receipt/{transaction}', [ReceiptController::class, 'print'])
+//     ->name('print-receipt');
+
+Route::get('/receipts/print/{transaction}', [ReceiptController::class, 'print'])->name('receipts.print');
