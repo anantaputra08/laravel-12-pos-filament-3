@@ -190,7 +190,7 @@ class TransactionResource extends Resource
                                 if (empty($state)) {
                                     return;
                                 }
-                                
+
                                 if (strlen($state) > 1 && $state[0] === '0') {
                                     $decimalValue = '0.' . substr($state, 1);
                                     $set('qty', (float) $decimalValue); // Set nilai qty ke format desimal
@@ -618,9 +618,9 @@ class TransactionResource extends Resource
                 // }),
                 Tables\Columns\TextColumn::make('payment_type')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('expiry_time')
-                    ->dateTime()
-                    ->sortable(),
+                // Tables\Columns\TextColumn::make('expiry_time')
+                //     ->dateTime()
+                //     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -634,9 +634,11 @@ class TransactionResource extends Resource
                     ->label('Print Receipt')
                     ->icon('heroicon-o-printer')
                     ->action(fn(Transaction $record) => redirect()->route('receipts.print', $record)),
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
